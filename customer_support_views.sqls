@@ -1,0 +1,45 @@
+
+-- 1. Ticket Count by Priority
+CREATE VIEW ticket_count_by_priority AS
+SELECT
+    ticket_priority,
+    COUNT(*) AS total_tickets
+FROM support_tickets
+GROUP BY ticket_priority
+ORDER BY total_tickets DESC;
+
+-- 2. Average Customer Satisfaction by Priority
+CREATE VIEW satisfaction_by_priority AS
+SELECT
+    ticket_priority,
+    ROUND(AVG(customer_satisfaction_rating)::numeric, 2) AS avg_satisfaction
+FROM support_tickets
+WHERE customer_satisfaction_rating IS NOT NULL
+GROUP BY ticket_priority
+ORDER BY avg_satisfaction DESC;
+
+-- 3. Average Resolution Time (in Hours)
+CREATE VIEW avg_resolution_time AS
+SELECT
+    ROUND(AVG(EXTRACT(EPOCH FROM (time_to_resolution - first_response_time)) / 3600)::numeric, 2) AS avg_resolution_time_hours
+FROM support_tickets
+WHERE time_to_resolution IS NOT NULL AND first_response_time IS NOT NULL;
+
+-- 4. Overdue Tickets (more than 48 hours)
+CREATE VIEW overdue_tickets AS
+SELECT
+    ticket_id,
+    first_response_time,
+    time_to_resolution,
+    EXTRACT(EPOCH FROM (time_to_resolution - first_response_time)) / 3600 AS resolution_hours,
+    CASE
+        WHEN time_to_resolution - first_response_time > INTERVAL '48 hours' THEN 'OVERDUE'
+        ELSE 'ON TIME'
+    END AS resolution_status
+FROM support_tickets
+WHERE time_to_resolution IS NOT NULL;
+
+-- 5. Ticket Preview (Sample Data)
+CREATE VIEW ticket_preview AS
+SELECT * FROM support_tickets
+LIMIT 10;
